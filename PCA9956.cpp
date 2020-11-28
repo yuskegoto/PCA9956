@@ -201,3 +201,16 @@ void PCA9956::setLEDPattern(uint8_t *pattern)
     for (uint8_t i = 0; i < PCA9965_NUM_LEDS; i++) ledStatus[i] = pattern[i];
 }
 
+void PCA9956::pwmLED(uint8_t LEDNo, uint8_t PWMPower)
+{
+    if (!isPWM)
+    {
+        setPWMMode_all();
+    }
+    uint8_t cmd[2];
+    cmd[0] = PWM0 + LEDNo;
+    cmd[1] = PWMPower;
+
+    i2cWrite(_deviceAddress, cmd, 2);
+}
+

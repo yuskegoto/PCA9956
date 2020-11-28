@@ -11,7 +11,6 @@
 #include "M5Atom.h"
 #endif
 
-// PCA9956 ledDriver(&Wire);
 PCA9956 ledDrivers[2]{{&Wire}, {&Wire}}; // if you have multiple drivers, init this way...
 // PCA9956 ledDrivers[9]{{&Wire}, {&Wire}, {&Wire}, {&Wire}, {&Wire}, {&Wire}, {&Wire}, {&Wire}, {&Wire}}; // if you have multiple drivers, init this way...
 
@@ -31,7 +30,6 @@ void setup()
 
   Wire.begin(21, 22); // Wire needs to init separately...
 
-  // ledDriver.init(devAddresses1, LED_BRIGHTNESS);
   ledDrivers[0].init(DEV_ADDRESS2, LED_BRIGHTNESS);
   ledDrivers[1].init(DEV_ADDRESS1, LED_BRIGHTNESS);
   // ledDrivers[2].init(DEV_ADDRESS3, LED_BRIGHTNESS);
@@ -69,7 +67,6 @@ void loop()
   for (uint8_t i = 0; i < PCA9965_NUM_LEDS; i++)
   {
     ledDrivers[0].onLED(i);
-    // ledDriver.onLED(i);
     ledDrivers[1].onLED(PCA9965_NUM_LEDS - i - 1);
     // ledDrivers[2].onLED(i);
     // ledDrivers[3].onLED(i);
@@ -90,7 +87,6 @@ void loop()
     delay(500);
 
     ledDrivers[0].offLED(i);
-    // ledDriver.offLED(i);
     ledDrivers[1].offLED(PCA9965_NUM_LEDS - i - 1);
     // ledDrivers[2].offLED(i);
     // ledDrivers[3].offLED(i);
