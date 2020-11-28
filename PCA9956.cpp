@@ -1,5 +1,5 @@
 #include "PCA9956.h"
-#define SERIAL_DEBUG
+// #define SERIAL_DEBUG
 
 // Init PCA9956 library with the pointer of TwoWire instance Wire or Wire1
 PCA9956::PCA9956(TwoWire *w) : wire(w)
