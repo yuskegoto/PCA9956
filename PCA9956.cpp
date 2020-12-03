@@ -13,7 +13,7 @@ void PCA9956::init(uint8_t devAddress, uint8_t ledBrightness, bool enablePWM)
     Serial.println(devAddress);
     #endif
 
-    if (!enablePWM) ledMode1Setting(MODE1_SETTING_NO_INCLEMENT); //disables all options...
+    if (!enablePWM) ledMode1Setting(MODE1_SETTING_NO_INCREMENT); //disables all options...
     setLEDOutMode_all(LEDMODE_FULLOFF); // set leds to full off
 
     setLEDCurrent_all(ledBrightness);
@@ -30,16 +30,16 @@ void PCA9956::setLEDCurrent(uint8_t ledNo, uint8_t iref)
 
 void PCA9956::setLEDCurrent_all(uint8_t iref)
 {
-    // set current auto inclement
-    ledMode1Setting(MODE1_SETTING_AUTO_INCLEMENT_IREF);
+    // set current auto INCREMENT
+    ledMode1Setting(MODE1_SETTING_AUTO_INCREMENT_IREF);
     uint8_t cmd[25];
-    cmd[0] = IREF0 | AUTO_INCLEMENT_BIT;
+    cmd[0] = IREF0 | AUTO_INCREMENT_BIT;
     for(uint8_t i = 1; i < 25; i++) cmd[i] = iref;
 
     i2cWrite(_deviceAddress, cmd, sizeof(cmd));
 
-    // stop auto inclement
-    ledMode1Setting(MODE1_SETTING_NO_INCLEMENT);
+    // stop auto INCREMENT
+    ledMode1Setting(MODE1_SETTING_NO_INCREMENT);
 }
 
 //MODE1 reg setting
@@ -169,8 +169,8 @@ void PCA9956::offLED(uint8_t LEDNo)
 
 void PCA9956::setPWMMode_all()
 {
-    // set pwm auto inclement
-    ledMode1Setting(MODE1_SETTING_AUTO_INCLEMENT_BRIGHTNESS);
+    // set pwm auto INCREMENT
+    ledMode1Setting(MODE1_SETTING_AUTO_INCREMENT_BRIGHTNESS);
     setLEDOutMode_all(LEDMODE_PWM);
     isPWM = true;
 
@@ -189,7 +189,7 @@ void PCA9956::setLEDPattern(uint8_t *pattern)
 
 
         uint8_t cmd[25];
-    cmd[0] = PWM0 | AUTO_INCLEMENT_BIT;
+    cmd[0] = PWM0 | AUTO_INCREMENT_BIT;
     for (uint8_t i = 1; i < 25; i++)
     {
         cmd[i] = pattern[i - 1];

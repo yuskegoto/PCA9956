@@ -11,6 +11,8 @@
 #endif
 
 PCA9956 ledDrivers[2]{{&Wire}, {&Wire}}; // if you have multiple drivers, init this way...
+PCA9956 ledDriver3(&Wire); // if you have multiple drivers, init this way...
+
 // PCA9956 ledDrivers[9]{{&Wire}, {&Wire}, {&Wire}, {&Wire}, {&Wire}, {&Wire}, {&Wire}, {&Wire}, {&Wire}}; // if you have multiple drivers, init this way...
 
 #ifdef M5ATOM
@@ -31,6 +33,8 @@ void setup()
 
   ledDrivers[0].init(DEV_ADDRESS2, LED_BRIGHTNESS);
   ledDrivers[1].init(DEV_ADDRESS1, LED_BRIGHTNESS);
+  ledDriver3.init((DEV_ADDRESS1, LED_BRIGHTNESS);
+
   // ledDrivers[2].init(DEV_ADDRESS3, LED_BRIGHTNESS);
   // ledDrivers[3].init(DEV_ADDRESS4, LED_BRIGHTNESS);
   // ledDrivers[4].init(DEV_ADDRESS5, LED_BRIGHTNESS);
@@ -62,18 +66,21 @@ void loop()
     delay(10);
   }
 
+
   /*********************** simple ON-OFF control demo *************************************/
-  for (uint8_t i = 0; i < PCA9965_NUM_LEDS; i++)
-  {
-    ledDrivers[0].onLED(i);
-    ledDrivers[1].onLED(PCA9965_NUM_LEDS - i - 1);
-    // ledDrivers[2].onLED(i);
-    // ledDrivers[3].onLED(i);
-    // ledDrivers[4].onLED(i);
-    // ledDrivers[5].onLED(i);
-    // ledDrivers[6].onLED(i);
-    // ledDrivers[7].onLED(i);
-    // ledDrivers[8].onLED(i);
+  for (uint8_t no = 0; no < PCA9965_NUM_LEDS; i++)
+
+    for (uint8_t i = 0; i < PCA9965_NUM_LEDS; i++)
+    {
+      ledDrivers[0].onLED(i);
+      ledDrivers[1].onLED(PCA9965_NUM_LEDS - i - 1);
+      // ledDrivers[2].onLED(i);
+      // ledDrivers[3].onLED(i);
+      // ledDrivers[4].onLED(i);
+      // ledDrivers[5].onLED(i);
+      // ledDrivers[6].onLED(i);
+      // ledDrivers[7].onLED(i);
+      // ledDrivers[8].onLED(i);
 
 #ifdef M5ATOM
     if (blink)
