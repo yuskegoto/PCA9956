@@ -1,4 +1,3 @@
-// Not so unfriendly data sheet: https://www.nxp.com/docs/en/data-sheet/PCA9956B.pdf
 #include <Arduino.h>
 #include <Wire.h>
 
