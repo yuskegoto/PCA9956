@@ -37,16 +37,16 @@ void setup()
     // pcaManager.setAddress(8, DEV_ADDRESS9);
     // pcaManager.setAddress(9, DEV_ADDRESS10);
 
-    pcaManager.setSectorAndLEDNo(0, DEV1_Groupe, DEV1_ledNo);
-    pcaManager.setSectorAndLEDNo(1, DEV2_Groupe, DEV2_ledNo);
-    // pcaManager.setSectorAndLEDNo(2, DEV3_Groupe, DEV3_ledNo);
-    // pcaManager.setSectorAndLEDNo(3, DEV4_Groupe, DEV3_ledNo);
-    // pcaManager.setSectorAndLEDNo(4, DEV5_Groupe, DEV3_ledNo);
-    // pcaManager.setSectorAndLEDNo(5, DEV6_Groupe, DEV3_ledNo);
-    // pcaManager.setSectorAndLEDNo(6, DEV7_Groupe, DEV3_ledNo);
-    // pcaManager.setSectorAndLEDNo(7, DEV8_Groupe, DEV3_ledNo);
-    // pcaManager.setSectorAndLEDNo(8, DEV9_Groupe, DEV3_ledNo);
-    // pcaManager.setSectorAndLEDNo(9, DEV10_Groupe, DEV3_ledNo);
+    pcaManager.setSectorAndLEDNo(0, DEV1_Group, DEV1_ledNo);
+    pcaManager.setSectorAndLEDNo(1, DEV2_Group, DEV2_ledNo);
+    // pcaManager.setSectorAndLEDNo(2, DEV3_Group, DEV3_ledNo);
+    // pcaManager.setSectorAndLEDNo(3, DEV4_Group, DEV3_ledNo);
+    // pcaManager.setSectorAndLEDNo(4, DEV5_Group, DEV3_ledNo);
+    // pcaManager.setSectorAndLEDNo(5, DEV6_Group, DEV3_ledNo);
+    // pcaManager.setSectorAndLEDNo(6, DEV7_Group, DEV3_ledNo);
+    // pcaManager.setSectorAndLEDNo(7, DEV8_Group, DEV3_ledNo);
+    // pcaManager.setSectorAndLEDNo(8, DEV9_Group, DEV3_ledNo);
+    // pcaManager.setSectorAndLEDNo(9, DEV10_Group, DEV3_ledNo);
 
 #ifdef M5ATOM
     M5.begin(true, false, true); // seems like m5 inits wire, which is not comvenient so disables it first
