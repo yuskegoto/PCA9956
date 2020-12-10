@@ -28,6 +28,7 @@
 PCA9956::PCA9956(TwoWire *w) : wire(w)
 {};
 
+
 void PCA9956::init(uint8_t devAddress, uint8_t ledBrightness, bool enablePWM)
 {
     _deviceAddress = devAddress;
@@ -41,6 +42,48 @@ void PCA9956::init(uint8_t devAddress, uint8_t ledBrightness, bool enablePWM)
 
     setLEDCurrent_all(ledBrightness);
     isPWM = false;
+}
+
+void PCA9956::i2cWrite(uint8_t slave_address, uint8_t *data, uint8_t num)
+{
+    wire->beginTransmission(slave_address);
+    for (int i = 0; i < num; i++)
+    {
+        wire->write(*(data + i));
+    }
+    wire->endTransmission();
+}
+
+// i2c scanner taken from here: https://playground.arduino.cc/Main/I2cScanner
+uint8_t PCA9956::i2cScan(uint8_t startAddress)
+{
+    uint8_t foundAddress = 0;
+    for (uint8_t address = startAddress; address < 127; address++)
+    {
+        // The i2c_scanner uses the return value of
+        // the Write.endTransmisstion to see if
+        // a device did acknowledge to the address.
+        wire->beginTransmission(address);
+        uint8_t error = wire->endTransmission();
+
+        if (error == 0)
+        {
+            Serial.print("\nI2C device found at address 0x");
+            if (address < 16)
+                Serial.print("0");
+            Serial.println(address, HEX);
+            foundAddress = address;
+            break;
+        }
+        else if (error == 4)
+        {
+            Serial.print("Unknown error at address 0x");
+            if (address < 16)
+                Serial.print("0");
+            Serial.println(address, HEX);
+        }
+    }
+    return foundAddress;
 }
 
 // LED No: 0 - 23
@@ -111,48 +154,6 @@ void PCA9956::setLEDOutMode(uint8_t regAdr, uint8_t mode)
 #endif
 }
 
-// i2c scanner taken from here: https://playground.arduino.cc/Main/I2cScanner
-uint8_t PCA9956::i2cScan(uint8_t startAddress)
-{
-    uint8_t foundAddress = 0;
-    for (uint8_t address = startAddress; address < 127; address++)
-    {
-        // The i2c_scanner uses the return value of
-        // the Write.endTransmisstion to see if
-        // a device did acknowledge to the address.
-        wire->beginTransmission(address);
-        uint8_t error = wire->endTransmission();
-
-        if (error == 0)
-        {
-            Serial.print("\nI2C device found at address 0x");
-            if (address < 16)
-                Serial.print("0");
-            Serial.println(address, HEX);
-            foundAddress = address;
-            break;
-        }
-        else if (error == 4)
-        {
-            Serial.print("Unknown error at address 0x");
-            if (address < 16)
-                Serial.print("0");
-            Serial.println(address, HEX);
-        }
-    }
-    return foundAddress;
-}
-
-void PCA9956::i2cWrite(uint8_t slave_address, uint8_t *data, uint8_t num)
-{
-    wire->beginTransmission(slave_address);
-    for (int i = 0; i < num; i++)
-    {
-        wire->write(*(data + i));
-    }
-    wire->endTransmission();
-}
-
 void PCA9956::onLED(uint8_t LEDNo)
 {
     if (LEDNo < PCA9965_NUM_LEDS)
@@ -164,8 +165,21 @@ void PCA9956::onLED(uint8_t LEDNo)
         #ifdef SERIAL_DEBUG
         Serial.print("on  ");
         #endif
-        uint8_t regAdr = uint8_t(LEDNo / 4) + LEDOUT0;
+        uint8_t LEDgroup = uint8_t(LEDNo / 4);
+        uint8_t regAdr = LEDgroup + LEDOUT0;
         uint8_t regVal = 1 << ((LEDNo % 4) * 2);
+
+        for (uint8_t i = 0; i < 4; i++)
+        {
+            uint8_t led = (LEDgroup * 4) + i;
+            if (led != LEDNo)
+            {
+                if(ledStatus[led] == 0xFF)
+                {
+                    regVal |= 1 << (i * 2);
+                }
+            }
+        }
 
         setLEDOutMode(regAdr, regVal);
         ledStatus[LEDNo] = 0xFF;
@@ -185,20 +199,22 @@ void PCA9956::offLED(uint8_t LEDNo)
         Serial.print("off ");
         #endif
 
-        uint8_t regAdr = uint8_t(LEDNo / 4) + LEDOUT0;
+        uint8_t LEDGroup = (LEDNo / 4);
+        uint8_t regAdr = LEDGroup + LEDOUT0;
         
         // check other leds' status
         uint8_t registerValue = 0;
 
-        uint8_t ledGroupe = (LEDNo / 4) * 4;
-        for (uint8_t i; i < 4; i++)
+        for (uint8_t i = 0; i < 4; i++)
         {
-            if (ledGroupe + i != LEDNo && ledStatus[ledGroupe + i] == 0xFF)
+            uint8_t led = (LEDGroup * 4) + i;
+            if (led != LEDNo && ledStatus[led] == 0xFF)
             {
-                registerValue |= 1 << (((ledGroupe + i) % 4) * 2);
+                registerValue |= 1 << (i * 2);
             }
         }
-        setLEDOutMode(regAdr, 0);        // TODO: must be implemented to turn off individually
+        // Serial.println(registerValue, BIN);
+        setLEDOutMode(regAdr, registerValue);
         ledStatus[LEDNo] = 0;
     }
 }
@@ -254,10 +270,61 @@ void PCA9956::pwmLED(uint8_t LEDNo, uint8_t PWMPower)
     }
 }
 
-// bool PCA9956::checkTempWarning()
-// {
+// read out one byte from regester
+uint8_t PCA9956::readRegisterStatus(uint8_t regAddress)
+{
+    wire->beginTransmission(_deviceAddress);
+    wire->write(regAddress);
+    wire->endTransmission();
 
-// }
+    Wire.requestFrom(_deviceAddress, 1);
+    while (Wire.available() < 1)
+        delay(1);
+    uint8_t status = Wire.read();
+
+    return status;
+}
+
+void PCA9956::clearMode2Error()
+{
+    uint8_t cmd[2];
+    cmd[0] = MODE2;
+    cmd[1] = MODE2_CLEARERROR;
+
+    i2cWrite(_deviceAddress, cmd, 2);
+}
+
+// LEDGroup : 0 - 5 whereas 0: LED0 - LED3
+// Retruns 0 if no error was detected
+// See PCA9956 P.25 for detailed status
+uint8_t PCA9956::getLEDErrorStatus(uint8_t LEDGroup)
+{
+    uint8_t status = readRegisterStatus(MODE2);
+    // Serial.println(status, BIN);
+    if (status & MODE2_LED_ERROR)
+    {
+        status = readRegisterStatus(ERROR_LED0_3 + LEDGroup);
+        // Serial.println(status, BIN);
+        return status;
+    }
+    return 0;
+}
+
+bool PCA9956::checkTempWarning()
+{
+    // Serial.println("mode2 status: ");
+    clearMode2Error();
+    uint8_t status = readRegisterStatus(MODE2);
+    // Serial.println(status, BIN);
+    if(status & MODE2_OVERTEMPERATURE)
+    {
+        // Serial.println("over temp!");
+        return true;
+    }
+    // Serial.println();
+
+    return false;
+}
 
 /****************************** Manager Functions ***********************************/
 PCA9956_Manager::PCA9956_Manager(uint8_t num_sectors, uint8_t num_devices)
@@ -281,7 +348,6 @@ void PCA9956_Manager::setAddress(uint8_t driverNo, uint8_t chipAddress)
 }
 
 // Defines all 24 sectorNo and LEDNo on one chip of driver at once, therefore they must be uint8_t array with 24 elements: sectorNo[24], ledNo_Arm[24]
-// void PCA9956_Manager::setSectorAndLEDNo(uint8_t driverNo, uint8_t *sectorNos, uint8_t *sectorLEDNos)
 void PCA9956_Manager::setSectorAndLEDNo(uint8_t driverNo, const uint8_t *sectorNos, const uint8_t *sectorLEDNos)
 {
     for(uint8_t i = 0; i < PCA9965_NUM_LEDS; i ++)
@@ -292,24 +358,8 @@ void PCA9956_Manager::setSectorAndLEDNo(uint8_t driverNo, const uint8_t *sectorN
     updateSector2DevNoMap();
 }
 
-// This fuction assumes that numbers of driver < number of sectors, so when you specify sector No, driver No can be determined.
 uint8_t PCA9956_Manager::getDeviceNo(uint8_t sectorNo)
 {
-    // for (uint8_t devNo = 0; devNo < numDevices; devNo++)
-    // {
-    //     if (deviceMap.device[devNo].led[0].sectorNo <= sectorNo &&
-    //         sectorNo <= deviceMap.device[devNo].led[PCA9965_NUM_LEDS - 1].sectorNo)
-    //     {
-    //         // for (uint8_t j = 0; j < PCA9965_NUM_LEDS; j++)
-    //         // {
-    //         //     Serial.print(deviceMap.driver[devNo].led[j].sectorNo);
-    //         //     Serial.print(" ");
-    //         // }
-    //         // Serial.println("");
-    //         return devNo;
-    //     }
-    // }
-
     return sector2DevNoMap[sectorNo];
 }
 

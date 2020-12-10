@@ -35,9 +35,21 @@
 #define MODE1_SETTING_AUTO_INCREMENT_BRIGHTNESS 0b10100000
 #define MODE1_SETTING_AUTO_INCREMENT_IREF 0b11000000
 #define MODE2 0x01
+#define MODE2_OVERTEMPERATURE 0b10000000
+#define MODE2_LED_ERROR 0b1000000
+#define MODE2_CLEARERROR 0b10000
+#define ERROR_LED0_3 0x41
+#define ERROR_LED4_7 0x42
+#define ERROR_LED8_11 0x43
+#define ERROR_LED12_15 0x44
+#define ERROR_LED16_19 0x45
+#define ERROR_LED20_23 0x46
+#define ERROR_OPEN_CIRCUIT 0b10101010
+#define ERROR_SHORT_CIRCUIT 0b01010101
+
 #define PWM0 0x0A
-#define PWM8 0x12
-#define PWM23 0x21
+// #define PWM8 0x12
+// #define PWM23 0x21
 
 #define GRPPWM 0x0A
 #define GRPFREQ 0x0B
@@ -69,6 +81,7 @@ class PCA9956{
         void setPWMMode_all();
         void setLEDOutMode_all(uint8_t mode);
         bool checkTempWarning();
+        uint8_t getLEDErrorStatus(uint8_t LEDGroup = ERROR_LED0_3);
 
         bool isPWM;
         uint8_t ledStatus[PCA9965_NUM_LEDS];
@@ -79,6 +92,9 @@ class PCA9956{
         void setLEDCurrent_all(uint8_t iref);
         void setLEDOutMode(uint8_t registorAddress, uint8_t mode);
         void i2cWrite(uint8_t slave_address, uint8_t *data, uint8_t num);
+        uint8_t readRegisterStatus(uint8_t regAddress);
+        void clearMode2Error();
+
         TwoWire *wire;
 };
 

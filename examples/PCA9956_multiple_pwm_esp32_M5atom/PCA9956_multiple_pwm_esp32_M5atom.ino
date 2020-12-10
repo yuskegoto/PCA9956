@@ -68,19 +68,17 @@ void loop()
 
 
   /*********************** simple ON-OFF control demo *************************************/
-  for (uint8_t no = 0; no < PCA9965_NUM_LEDS; i++)
-
-    for (uint8_t i = 0; i < PCA9965_NUM_LEDS; i++)
-    {
-      ledDrivers[0].onLED(i);
-      ledDrivers[1].onLED(PCA9965_NUM_LEDS - i - 1);
-      // ledDrivers[2].onLED(i);
-      // ledDrivers[3].onLED(i);
-      // ledDrivers[4].onLED(i);
-      // ledDrivers[5].onLED(i);
-      // ledDrivers[6].onLED(i);
-      // ledDrivers[7].onLED(i);
-      // ledDrivers[8].onLED(i);
+  for (uint8_t i = 0; i < PCA9965_NUM_LEDS; i++)
+  {
+    ledDrivers[0].onLED(i);
+    ledDrivers[1].onLED(PCA9965_NUM_LEDS - i - 1);
+    // ledDrivers[2].onLED(i);
+    // ledDrivers[3].onLED(i);
+    // ledDrivers[4].onLED(i);
+    // ledDrivers[5].onLED(i);
+    // ledDrivers[6].onLED(i);
+    // ledDrivers[7].onLED(i);
+    // ledDrivers[8].onLED(i);
 
 #ifdef M5ATOM
     if (blink)
