@@ -12,6 +12,7 @@ This is Arduino library for I2C controlled LED driver PCA9956. The chips is capa
 - Individual PWM control
 - Individual Iref setting
 - PWM control with auto INCREMENT feature for faster communication
+- Multiple devices and sector management tool
 
 ## Procedure
 

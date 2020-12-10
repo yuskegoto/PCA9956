@@ -1,3 +1,27 @@
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+/**
+ * \par Copyright (C), 2020, Yuske Goto
+ * \class PCA9956
+ * \brief   Driver for PCA9956
+ * @file    PCA9956.h
+ * @author  Yuske Goto
+ * @version V0.1
+ * @date    2020/12/10
+ * @brief   Header for PCA9956.cpp module
+ *
+ * \par Description
+ * This file is a driver for PCA9956 LED driver module.
+ * See detail for the spec-sheet below
+ * https://www.nxp.com/docs/en/data-sheet/PCA9956B.pdf *
+ *
+ * \par History:
+ * <pre>
+ * `<Author>`         `<Time>`        `<Version>`        `<Descr>`
+ * Yuske Goto         2020/12/10        0.1             Added multiple driver and sector management class.
+ * </pre>
+ *
+ */
+
 #ifndef _PCA9956_H_
 #define _PCA9956_H_
 

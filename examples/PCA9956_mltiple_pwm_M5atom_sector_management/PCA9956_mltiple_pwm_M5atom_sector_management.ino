@@ -1,4 +1,7 @@
-// Not so friendly data sheet: https://www.nxp.com/docs/en/data-sheet/PCA9956B.pdf
+// This is a sample code for the multiple device and sector management tool
+// Sector can be useful if you want to control several pins of the driver as a group
+// This sample is written for esp32 / M5Atom. But can be used for other platforms
+
 #include <Arduino.h>
 #include <Wire.h>
 
