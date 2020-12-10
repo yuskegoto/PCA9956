@@ -20,21 +20,26 @@ void PCA9956::init(uint8_t devAddress, uint8_t ledBrightness, bool enablePWM)
     isPWM = false;
 }
 
-void PCA9956::setLEDCurrent(uint8_t ledNo, uint8_t iref)
+// LED No: 0 - 23
+void PCA9956::setLEDCurrent(uint8_t LEDNo, uint8_t irefFactor)
 {
-    uint8_t cmd[2];
-    cmd[0] = ledNo + IREF0;
-    cmd[1] = iref;
-    i2cWrite(_deviceAddress, cmd, sizeof(cmd));
+    if (LEDNo < PCA9965_NUM_LEDS)
+    {
+        uint8_t cmd[2];
+        cmd[0] = LEDNo + IREF0;
+        cmd[1] = irefFactor;
+        i2cWrite(_deviceAddress, cmd, sizeof(cmd));
+    }
 }
 
-void PCA9956::setLEDCurrent_all(uint8_t iref)
+void PCA9956::setLEDCurrent_all(uint8_t irefFactor)
 {
     // set current auto INCREMENT
     ledMode1Setting(MODE1_SETTING_AUTO_INCREMENT_IREF);
     uint8_t cmd[25];
     cmd[0] = IREF0 | AUTO_INCREMENT_BIT;
-    for(uint8_t i = 1; i < 25; i++) cmd[i] = iref;
+    for(uint8_t i = 1; i < 25; i++)
+        cmd[i] = irefFactor;
 
     i2cWrite(_deviceAddress, cmd, sizeof(cmd));
 
@@ -127,44 +132,52 @@ void PCA9956::i2cWrite(uint8_t slave_address, uint8_t *data, uint8_t num)
 
 void PCA9956::onLED(uint8_t LEDNo)
 {
-    if(isPWM) setLEDOutMode_all(LEDMODE_FULLOFF);
-    isPWM = false;
+    if (LEDNo < PCA9965_NUM_LEDS)
+    {
+        if (isPWM)
+            setLEDOutMode_all(LEDMODE_FULLOFF);
+        isPWM = false;
 
-    #ifdef SERIAL_DEBUG
-    Serial.print("on  ");
-    #endif
-    uint8_t regAdr = uint8_t(LEDNo / 4) + LEDOUT0;
-    uint8_t regVal = 1 << ((LEDNo % 4) * 2);
+        #ifdef SERIAL_DEBUG
+        Serial.print("on  ");
+        #endif
+        uint8_t regAdr = uint8_t(LEDNo / 4) + LEDOUT0;
+        uint8_t regVal = 1 << ((LEDNo % 4) * 2);
 
-    setLEDOutMode(regAdr, regVal);
-    ledStatus[LEDNo] = 0xFF;
+        setLEDOutMode(regAdr, regVal);
+        ledStatus[LEDNo] = 0xFF;
+    }
 }
 
 // LED No. 0 -23
 void PCA9956::offLED(uint8_t LEDNo)
 {
-    if(isPWM) setLEDOutMode_all(LEDMODE_FULLOFF);
-    isPWM = false;
-
-    #ifdef SERIAL_DEBUG
-    Serial.print("off ");
-    #endif
-
-    uint8_t regAdr = uint8_t(LEDNo / 4) + LEDOUT0;
-    
-    // check other leds' status
-    uint8_t registerValue = 0;
-
-    uint8_t ledGroupe = (LEDNo / 4) * 4;
-    for (uint8_t i; i < 4; i++)
+    if (LEDNo < PCA9965_NUM_LEDS)
     {
-        if (ledGroupe + i != LEDNo && ledStatus[ledGroupe + i] == 0xFF)
+        if (isPWM)
+            setLEDOutMode_all(LEDMODE_FULLOFF);
+        isPWM = false;
+
+        #ifdef SERIAL_DEBUG
+        Serial.print("off ");
+        #endif
+
+        uint8_t regAdr = uint8_t(LEDNo / 4) + LEDOUT0;
+        
+        // check other leds' status
+        uint8_t registerValue = 0;
+
+        uint8_t ledGroupe = (LEDNo / 4) * 4;
+        for (uint8_t i; i < 4; i++)
         {
-            registerValue |= 1 << (((ledGroupe + i) % 4) * 2);
+            if (ledGroupe + i != LEDNo && ledStatus[ledGroupe + i] == 0xFF)
+            {
+                registerValue |= 1 << (((ledGroupe + i) % 4) * 2);
+            }
         }
+        setLEDOutMode(regAdr, 0);        // TODO: must be implemented to turn off individually
+        ledStatus[LEDNo] = 0;
     }
-    setLEDOutMode(regAdr, 0);        // TODO: must be implemented to turn off individually
-    ledStatus[LEDNo] = 0;
 }
 
 void PCA9956::setPWMMode_all()
@@ -201,16 +214,121 @@ void PCA9956::setLEDPattern(uint8_t *pattern)
     for (uint8_t i = 0; i < PCA9965_NUM_LEDS; i++) ledStatus[i] = pattern[i];
 }
 
+// LED No: 0 - 23
 void PCA9956::pwmLED(uint8_t LEDNo, uint8_t PWMPower)
 {
-    if (!isPWM)
+    if(LEDNo < PCA9965_NUM_LEDS)
     {
-        setPWMMode_all();
-    }
-    uint8_t cmd[2];
-    cmd[0] = PWM0 + LEDNo;
-    cmd[1] = PWMPower;
+        if (!isPWM)
+        {
+            setPWMMode_all();
+        }
+        uint8_t cmd[2];
+        cmd[0] = PWM0 + LEDNo;
+        cmd[1] = PWMPower;
 
-    i2cWrite(_deviceAddress, cmd, 2);
+        i2cWrite(_deviceAddress, cmd, 2);
+    }
 }
 
+// bool PCA9956::checkTempWarning()
+// {
+
+// }
+
+/****************************** Manager Functions ***********************************/
+PCA9956_Manager::PCA9956_Manager(uint8_t num_sectors, uint8_t num_devices)
+{
+    numSectors = num_sectors;
+    numDevices = num_devices;
+    // sector2AddressMap = (uint8_t*)malloc(sizeof(uint8_t)* num_sectors);
+    sector2DevNoMap = new uint8_t[num_sectors];
+}
+
+// destructor
+PCA9956_Manager::~PCA9956_Manager()
+{
+    free(sector2DevNoMap);
+}
+
+
+void PCA9956_Manager::setAddress(uint8_t driverNo, uint8_t chipAddress)
+{
+    deviceMap.device[driverNo].address = chipAddress;
+}
+
+// Defines all 24 sectorNo and LEDNo on one chip of driver at once, therefore they must be uint8_t array with 24 elements: sectorNo[24], ledNo_Arm[24]
+// void PCA9956_Manager::setSectorAndLEDNo(uint8_t driverNo, uint8_t *sectorNos, uint8_t *sectorLEDNos)
+void PCA9956_Manager::setSectorAndLEDNo(uint8_t driverNo, const uint8_t *sectorNos, const uint8_t *sectorLEDNos)
+{
+    for(uint8_t i = 0; i < PCA9965_NUM_LEDS; i ++)
+    {
+        deviceMap.device[driverNo].led[i].sectorNo = sectorNos[i];
+        deviceMap.device[driverNo].led[i].ledNo = sectorLEDNos[i];
+    }
+    updateSector2DevNoMap();
+}
+
+// This fuction assumes that numbers of driver < number of sectors, so when you specify sector No, driver No can be determined.
+uint8_t PCA9956_Manager::getDeviceNo(uint8_t sectorNo)
+{
+    // for (uint8_t devNo = 0; devNo < numDevices; devNo++)
+    // {
+    //     if (deviceMap.device[devNo].led[0].sectorNo <= sectorNo &&
+    //         sectorNo <= deviceMap.device[devNo].led[PCA9965_NUM_LEDS - 1].sectorNo)
+    //     {
+    //         // for (uint8_t j = 0; j < PCA9965_NUM_LEDS; j++)
+    //         // {
+    //         //     Serial.print(deviceMap.driver[devNo].led[j].sectorNo);
+    //         //     Serial.print(" ");
+    //         // }
+    //         // Serial.println("");
+    //         return devNo;
+    //     }
+    // }
+
+    return sector2DevNoMap[sectorNo];
+}
+
+// Function to retrieve led No. of the chip from sector No and sector LED No.
+uint8_t PCA9956_Manager::getLEDNo(uint8_t sectorNo, uint8_t sectorLEDNo)
+{
+    uint8_t devNo = getDeviceNo(sectorNo);
+    for (uint8_t ledNo = 0; ledNo < PCA9965_NUM_LEDS; ledNo++)
+    {
+        // Serial.print(" ");
+        // Serial.print(deviceMap.device[devNo].led[ledNo].sectorNo);
+        // Serial.print(":");
+        // Serial.print(deviceMap.device[devNo].led[ledNo].ledNo);
+        // Serial.print(":");
+        if (deviceMap.device[devNo].led[ledNo].ledNo == sectorLEDNo &&
+            deviceMap.device[devNo].led[ledNo].sectorNo == sectorNo)
+            // Serial.println("");
+            return ledNo;
+    }
+    // Serial.println("");
+    return 0xFF;
+}
+
+uint8_t PCA9956_Manager::getDeviceAddress(uint8_t deviceNo)
+{
+    return deviceMap.device[deviceNo].address;
+}
+
+uint8_t PCA9956_Manager::getDeviceAddressFromSectorNo(uint8_t sectorNo)
+{
+    uint8_t devNo = sector2DevNoMap[sectorNo];
+    return getDeviceAddress(devNo);
+}
+
+void PCA9956_Manager::updateSector2DevNoMap()
+{
+    for(uint8_t devNo = 0; devNo < numDevices; devNo ++)
+    {
+        for (uint8_t ledNo = 0; ledNo < PCA9965_NUM_LEDS; ledNo ++)
+        {
+            uint8_t sectorNo = deviceMap.device[devNo].led[ledNo].sectorNo;
+            sector2DevNoMap[sectorNo] = devNo;
+        }
+    }
+}

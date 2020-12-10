@@ -41,9 +41,10 @@ class PCA9956{
         // Controls all 24 leds at once with pattern uint8_t[0-255, 0-255....]
         void setLEDPattern(uint8_t *LEDPattern);
         // Sets individual current
-        void setLEDCurrent(uint8_t ledNo, uint8_t iref);
+        void setLEDCurrent(uint8_t ledNo, uint8_t irefFactor);
         void setPWMMode_all();
         void setLEDOutMode_all(uint8_t mode);
+        bool checkTempWarning();
 
         bool isPWM;
         uint8_t ledStatus[PCA9965_NUM_LEDS];
@@ -56,5 +57,46 @@ class PCA9956{
         void i2cWrite(uint8_t slave_address, uint8_t *data, uint8_t num);
         TwoWire *wire;
 };
+
+#define NUM_PCA9956s 10
+
+struct PCA9956_LED{
+    uint8_t sectorNo;
+    uint8_t ledNo;
+};
+
+struct PCA9956_Chip
+{
+    struct PCA9956_LED led[PCA9965_NUM_LEDS];
+    uint8_t address;
+};
+
+struct PCA9956_Group
+{
+    struct PCA9956_Chip device[NUM_PCA9956s];
+};
+
+class PCA9956_Manager{
+    public:
+        PCA9956_Manager(uint8_t num_sectors, uint8_t num_devices = NUM_PCA9956s);
+        ~PCA9956_Manager(); // destructor
+        void setAddress(uint8_t driverNo, uint8_t chipAddress);
+        // void setSectorAndLEDNo(uint8_t driverNo, uint8_t *sectorNos, uint8_t *sectorLEDNos); // Defines all 24 sectorNo and LEDNo on one chip of driver at once, therefore they must be uint8_t array with 24 elements: sectorNo[24], ledNo_Sector[24]
+        void setSectorAndLEDNo(uint8_t driverNo, const uint8_t *sectorNos, const uint8_t *sectorLEDNos); // Defines all 24 sectorNo and LEDNo on one chip of driver at once, therefore they must be uint8_t array with 24 elements: sectorNo[24], ledNo_Sector[24]
+                                                                                                         // sector No and led No on the sector must be defined for each of led channels on the chip
+        uint8_t getDeviceNo(uint8_t sectorNo);
+        uint8_t getLEDNo(uint8_t sectorNo, uint8_t sectorLEDNo); // return: led No. on the chip, not the actual No. on the arm
+        uint8_t getDeviceAddress(uint8_t deviceNo);
+        uint8_t getDeviceAddressFromSectorNo(uint8_t sectorNo);
+
+        uint8_t numDevices = NUM_PCA9956s;
+        uint8_t numSectors = NUM_PCA9956s;
+
+    private:
+        void updateSector2DevNoMap();
+        PCA9956_Group deviceMap;
+        uint8_t* sector2DevNoMap;
+};
+
 
 #endif
