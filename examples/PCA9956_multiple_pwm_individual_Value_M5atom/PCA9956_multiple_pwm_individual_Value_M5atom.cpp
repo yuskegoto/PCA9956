@@ -1,3 +1,8 @@
+// Code sample for individual current control with pwm
+// The difference to the PCA9956_multiple_pwm_individualControl_esp32 is
+// that this code controls different PWM values on each Pins at the same time
+// while the code mentioned above sends same value to all LED pins.
+
 #include <Arduino.h>
 #include <Wire.h>
 
