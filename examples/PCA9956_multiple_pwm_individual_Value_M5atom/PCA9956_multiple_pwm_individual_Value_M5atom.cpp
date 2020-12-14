@@ -1,8 +1,3 @@
-// Code sample for individual current control with pwm
-// The difference to the PCA9956_multiple_pwm_individualControl_esp32 is
-// that this code controls different PWM values on each Pins at the same time
-// while the code mentioned above sends same value to all LED pins.
-
 #include <Arduino.h>
 #include <Wire.h>
 
@@ -40,7 +35,8 @@ void setup()
 void loop()
 {
     /*********************** simple ON-OFF control demo *************************************/
-
+    uint8_t pattern0[PCA9965_NUM_LEDS];
+    uint8_t pattern1[PCA9965_NUM_LEDS];
     for (uint8_t j = 0; j < PCA9965_NUM_LEDS; j++)
     {
         for (uint8_t i = 0; i < PCA9965_NUM_LEDS; i++)
@@ -54,9 +50,20 @@ void loop()
             uint8_t val_int = (uint8_t)val;
             // Serial.print(val);
             // Serial.print(" ");
-            ledDrivers[0].pwmLED(i, val_int);
-            ledDrivers[1].pwmLED(PCA9965_NUM_LEDS - i - 1, val_int);
+
+            // Pattern1: You could use PWM9956.pwmLED(uint8_t LEDNo, uint8_t PWMPower), but not efficient,
+            //since you are sending command individually
+            // ledDrivers[0].pwmLED(i, val_int);
+            // ledDrivers[1].pwmLED(PCA9965_NUM_LEDS - i - 1, val_int);
+
+            pattern0[i] = val;
+            pattern1[PCA9965_NUM_LEDS - i - 1] = val;
         }
+        // Pattern2: By using PWM9956.setLEDPattern(uint8_t *LEDPattern), you can set PWM values of all 24 leds at once. This is more efficient
+        // especially if you have multiple PCA9956s
+        ledDrivers[0].setLEDPattern(pattern0);
+        ledDrivers[1].setLEDPattern(pattern1);
+
         // Serial.println();
 
 #ifdef M5ATOM
