@@ -46,10 +46,10 @@
 #define ERROR_LED20_23 0x46
 #define ERROR_OPEN_CIRCUIT 0b10101010
 #define ERROR_SHORT_CIRCUIT 0b01010101
+#define PCA9956_I2C_GENERAL_CALL 0x0
+#define PCA9956_RESET_ALL 0x6
 
 #define PWM0 0x0A
-// #define PWM8 0x12
-// #define PWM23 0x21
 
 #define GRPPWM 0x0A
 #define GRPFREQ 0x0B
@@ -66,7 +66,9 @@
 class PCA9956{
     public:
         PCA9956(TwoWire*);  //Initializer
-        void init(uint8_t devAddress, uint8_t ledBrightness, bool enablePWM = false);
+
+        // Resetting the driver several times causes the chips to halt
+        void init(uint8_t devAddress, uint8_t ledBrightness, bool enablePWM = false, bool resetStatus_all = false);
         uint8_t i2cScan(uint8_t startAddress = 1);
         // Turns on individual LED
         void onLED(uint8_t LEDNo);
@@ -78,10 +80,13 @@ class PCA9956{
         void setLEDPattern(uint8_t *LEDPattern);
         // Sets individual current
         void setLEDCurrent(uint8_t ledNo, uint8_t irefFactor);
-        void setPWMMode_all();
+        void setPWMMode_all(bool setAllLEDsOff = false);
         void setLEDOutMode_all(uint8_t mode);
         bool checkTempWarning();
         uint8_t getLEDErrorStatus(uint8_t LEDGroup = ERROR_LED0_3);
+        // send software reset to all devices
+        // Resetting the driver several times causes the chips to halt
+        void resetAllDevices();
 
         bool isPWM;
         uint8_t ledStatus[PCA9965_NUM_LEDS];
@@ -91,7 +96,7 @@ class PCA9956{
         void ledMode1Setting(uint8_t regsetting);
         void setLEDCurrent_all(uint8_t iref);
         void setLEDOutMode(uint8_t registorAddress, uint8_t mode);
-        void i2cWrite(uint8_t slave_address, uint8_t *data, uint8_t num);
+        void i2cWrite(uint8_t slave_address, uint8_t *data, uint8_t dataLength);
         uint8_t readRegisterStatus(uint8_t regAddress);
         void clearMode2Error();
 

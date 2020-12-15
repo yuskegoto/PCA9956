@@ -28,8 +28,7 @@
 PCA9956::PCA9956(TwoWire *w) : wire(w)
 {};
 
-
-void PCA9956::init(uint8_t devAddress, uint8_t ledBrightness, bool enablePWM)
+void PCA9956::init(uint8_t devAddress, uint8_t ledBrightness, bool enablePWM, bool resetStatus_all)
 {
     _deviceAddress = devAddress;
     #ifdef SERIAL_DEBUG
@@ -37,17 +36,39 @@ void PCA9956::init(uint8_t devAddress, uint8_t ledBrightness, bool enablePWM)
     Serial.println(devAddress);
     #endif
 
-    if (!enablePWM) ledMode1Setting(MODE1_SETTING_NO_INCREMENT); //disables all options...
-    setLEDOutMode_all(LEDMODE_FULLOFF); // set leds to full off
+    if (resetStatus_all)
+    {
+        resetAllDevices();
+    }
+
+    if (!enablePWM)
+    {
+        ledMode1Setting(MODE1_SETTING_NO_INCREMENT);
+        setLEDOutMode_all(LEDMODE_FULLOFF); // set leds to full off
+
+        isPWM = false;
+    }
+    else
+    {
+        setPWMMode_all(true);
+    }
 
     setLEDCurrent_all(ledBrightness);
-    isPWM = false;
 }
 
-void PCA9956::i2cWrite(uint8_t slave_address, uint8_t *data, uint8_t num)
+// send software reset to all devices
+// Resetting the driver several times causes the chip to halt
+void PCA9956::resetAllDevices()
+{
+    uint8_t data[] = {PCA9956_RESET_ALL};
+    i2cWrite(PCA9956_I2C_GENERAL_CALL, data, 1);
+    delay(1);
+}
+
+void PCA9956::i2cWrite(uint8_t slave_address, uint8_t *data, uint8_t dataLength)
 {
     wire->beginTransmission(slave_address);
-    for (int i = 0; i < num; i++)
+    for (int i = 0; i < dataLength; i++)
     {
         wire->write(*(data + i));
     }
@@ -84,6 +105,20 @@ uint8_t PCA9956::i2cScan(uint8_t startAddress)
         }
     }
     return foundAddress;
+}
+
+void PCA9956::setPWMMode_all(bool setAllLEDsOff)
+{
+    isPWM = true;
+    if(setAllLEDsOff)
+    {
+        uint8_t pattern[PCA9965_NUM_LEDS] = {0};
+        setLEDPattern(pattern);
+    }
+
+    // set pwm auto INCREMENT
+    ledMode1Setting(MODE1_SETTING_AUTO_INCREMENT_BRIGHTNESS);
+    setLEDOutMode_all(LEDMODE_PWM);
 }
 
 // LED No: 0 - 23
@@ -219,15 +254,6 @@ void PCA9956::offLED(uint8_t LEDNo)
     }
 }
 
-void PCA9956::setPWMMode_all()
-{
-    // set pwm auto INCREMENT
-    ledMode1Setting(MODE1_SETTING_AUTO_INCREMENT_BRIGHTNESS);
-    setLEDOutMode_all(LEDMODE_PWM);
-    isPWM = true;
-
-}
-
 // Sets pattern with uint8_t array [0-255, 0-255, ...x24]
 // the length of the pattern array must be 24 otherwise it wil crash!
 void PCA9956::setLEDPattern(uint8_t *pattern)
@@ -256,12 +282,13 @@ void PCA9956::setLEDPattern(uint8_t *pattern)
 // LED No: 0 - 23
 void PCA9956::pwmLED(uint8_t LEDNo, uint8_t PWMPower)
 {
+    if (!isPWM)
+    {
+        setPWMMode_all();
+    }
+
     if(LEDNo < PCA9965_NUM_LEDS)
     {
-        if (!isPWM)
-        {
-            setPWMMode_all();
-        }
         uint8_t cmd[2];
         cmd[0] = PWM0 + LEDNo;
         cmd[1] = PWMPower;

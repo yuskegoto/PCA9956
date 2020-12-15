@@ -1,3 +1,5 @@
+// Sample code for individual PWM control
+
 #include <Arduino.h>
 #include <Wire.h>
 
@@ -28,8 +30,14 @@ void setup()
 
     Wire.begin(21, 22); // Wire needs to be initialized separately...
 
-    ledDrivers[0].init(DEV_ADDRESS1, LED_BRIGHTNESS);
-    ledDrivers[1].init(DEV_ADDRESS2, LED_BRIGHTNESS);
+    // Call reset before init, otherwise init setting will be lost
+    ledDrivers[0].resetAllDevices();
+
+    // You can also reset the devices with init(uint8_t devAddress, uint8_t ledBrightness, bool enablePWM = false, bool resetStatus_all = false)
+    // The reest flag in init() set false by default
+    ledDrivers[0].init(DEV_ADDRESS1, LED_BRIGHTNESS, true);
+    ledDrivers[1].init(DEV_ADDRESS2, LED_BRIGHTNESS, true);
+    // delay(5000);
 }
 
 void loop()
@@ -56,8 +64,8 @@ void loop()
             // ledDrivers[0].pwmLED(i, val_int);
             // ledDrivers[1].pwmLED(PCA9965_NUM_LEDS - i - 1, val_int);
 
-            pattern0[i] = val;
-            pattern1[PCA9965_NUM_LEDS - i - 1] = val;
+            pattern0[i] = val_int;
+            pattern1[PCA9965_NUM_LEDS - i - 1] = val_int;
         }
         // Pattern2: By using PWM9956.setLEDPattern(uint8_t *LEDPattern), you can set PWM values of all 24 leds at once. This is more efficient
         // especially if you have multiple PCA9956s
