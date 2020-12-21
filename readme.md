@@ -18,7 +18,7 @@ This is Arduino library for I2C controlled LED driver PCA9956. The chips is capa
 
 Following is simplified procedure for hooking up the device.
 
-1．Connect the power and i2c wires / i2c及び電源を接続
+1．Connect the power and i2c wires
    
 Arduino   PCA9956
   
