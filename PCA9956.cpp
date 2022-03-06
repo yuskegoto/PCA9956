@@ -158,6 +158,46 @@ void PCA9956::ledMode1Setting(uint8_t regsetting)
     i2cWrite(_deviceAddress, cmd, 2);
 }
 
+/***************************************************************************
+ * @brief to global blink to work you need to set
+ * PWM0 - 23 (0Ah - 21h) to 0xFF or any value above 0 to see the result
+ * MODE2 01h register DMBLINK bit (bit 5) to 1
+ * LEDOUT1 to LEDOUT5 (02h - 07h) to 0b11111111 = LDRx => 11
+ * GRPFREQ (09h) for group blink frequency setting. From 0x00 for 15.26Hz to 0xFF for 16.8S
+ * GRPPWM (08h) for Group duty cycle setting.
+ * @param freq: GRPFREQ setting
+ * @param duty: GRPPWM setting, default is 0x80 = 50%
+ ***************************************************************************/
+void PCA9956::setBlinking(uint8_t freq, uint8_t duty)
+{
+    // for (uint8_t i = 0; i <= PCA9965_NUM_LEDS; i++)
+    // {
+    //     pwmLED(i, 0xFF);
+    // }
+    setSingleRegister(PWMALL, 0xFF);
+    // ledMode1Setting(MODE1_SETTING_AUTO_INCREMENT_BRIGHTNESS);
+    // uint8_t pattern[PCA9965_NUM_LEDS] = {0xFF};
+    // setLEDPattern(pattern);
+
+    isPWM = false;
+    // ledMode2Setting(MODE2_DMBLINK_BLINKING);
+    setSingleRegister(MODE2, MODE2_DMBLINK_BLINKING);
+
+    // ledMode1Setting(MODE1_SETTING_NO_INCREMENT);
+    setLEDOutMode_all(LEDMODE_GROUP_DIMMING);
+    setSingleRegister(GRPFREQ, freq); // Group dimming frequency setting
+    setSingleRegister(GRPPWM, duty); // Group dimming duty setting
+}
+
+void PCA9956::setSingleRegister(uint8_t registerAddress, uint8_t command)
+{
+    uint8_t cmd[2];
+    cmd[0] = registerAddress;
+    cmd[1] = command;
+
+    i2cWrite(_deviceAddress, cmd, 2);
+}
+
 void PCA9956::setLEDOutMode_all(uint8_t mode)
 {
     uint8_t cmd[2];
@@ -266,7 +306,7 @@ void PCA9956::setLEDPattern(uint8_t *pattern)
     #endif
 
 
-        uint8_t cmd[25];
+    uint8_t cmd[25];
     cmd[0] = PWM0 | AUTO_INCREMENT_BIT;
     for (uint8_t i = 1; i < 25; i++)
     {

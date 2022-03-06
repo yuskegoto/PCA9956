@@ -38,6 +38,7 @@
 #define MODE2_OVERTEMPERATURE 0b10000000
 #define MODE2_LED_ERROR 0b1000000
 #define MODE2_CLEARERROR 0b10000
+#define MODE2_DMBLINK_BLINKING 0b100000
 #define ERROR_LED0_3 0x41
 #define ERROR_LED4_7 0x42
 #define ERROR_LED8_11 0x43
@@ -50,16 +51,17 @@
 #define PCA9956_RESET_ALL 0x6
 
 #define PWM0 0x0A
+#define PWMALL 0x3F
 
-#define GRPPWM 0x0A
-#define GRPFREQ 0x0B
+#define GRPPWM 0x08
+#define GRPFREQ 0x09
 #define LEDOUT0 0x02
 #define IREF0 0x22
 
 #define LEDMODE_FULLOFF 0x00      //full off
 #define LEDMODE_FULLON 0b01010101 //full on
 #define LEDMODE_PWM 0b10101010    //control over pwm
-#define LEDMODE_PWM_GROUPE_DIMMING 0b11111111    //pwm + groupe dimming
+#define LEDMODE_GROUP_DIMMING 0b11111111 // pwm + group dimming / blinking
 
 #define PCA9965_NUM_LEDS 24 // Fixed value
 
@@ -87,6 +89,8 @@ class PCA9956{
         // send software reset to all devices
         // Resetting the driver several times causes the chips to halt
         void resetAllDevices();
+        void setBlinking(uint8_t freq, uint8_t duty = 0x80);
+        //void setGroupFrequency(uint8_t freq);
 
         bool isPWM;
         uint8_t ledStatus[PCA9965_NUM_LEDS];
@@ -99,6 +103,8 @@ class PCA9956{
         void i2cWrite(uint8_t slave_address, uint8_t *data, uint8_t dataLength);
         uint8_t readRegisterStatus(uint8_t regAddress);
         void clearMode2Error();
+
+        void setSingleRegister(uint8_t registerAddress, uint8_t command);
 
         TwoWire *wire;
 };

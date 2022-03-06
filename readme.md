@@ -13,6 +13,7 @@ This is Arduino library for I2C controlled LED driver PCA9956. The chips is capa
 - Individual Iref setting
 - PWM control with auto INCREMENT feature for faster communication
 - Multiple devices and sector management tool
+- Blink control
 
 ## Procedure
 
@@ -49,10 +50,13 @@ As you can see on the code, I did only on/off and pwm control. Group dimming is 
     
     10: LED driver can be indivisually controlled from PWMx resistor or PWMALL resistor for all control
         
-    11: LED driver's individual brightness and group's dimming/blinking can be controlled from PWMx or GRPPWM resistors
+    11: LED driver's individual brightness and group's dimming/blinking can be controlled from PWMx and GRPPWM resistors
     
 3. IREF0 - 23(0x22 - 0x39) out put current control
 
 This procedure is **not written cleary** on the datasheet. So I guess there are bunch of folks giving up before finding this procedure.
 
 Actually I found this procedure from a comment I found on [Amazon.jp's product page](https://www.amazon.co.jp/gp/aw/reviews/B01FJHF760). Thanks! 
+
+## Log
+20220306: Yuske: Added group blink control
